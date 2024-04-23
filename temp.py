@@ -6,7 +6,7 @@ import streamlit as st
 
 #CONNECTING TO GOOGLE API
 
-api_key = "AIzaSyBPKV1QryoZvJjLmz5f1EeTG0_D4AiwHpo"
+api_key = "api__key"
 api_service_name = "youtube"
 api_version = "v3"
 youtube = build(api_service_name, api_version, developerKey = api_key)
@@ -541,25 +541,26 @@ mydb = psycopg2.connect(host = "localhost",
 cursor = mydb.cursor()
 mydb.commit()   
 
-questions = st.selectbox('Questions', ('1. Names of all videos and their corresponding channels',
-                                       '2. Channels with the most number of videos and the number of videos they have',
-                                       '3. Top 10 most viewed videos and their respective channels',
-                                       '4. Number of comments on each video and their corresponding video names',
-                                       '5. Videos with the highest number of likes and their corresponding channel names',
-                                       '6. Total number of likes for each video and their corresponding video names',
-                                       '7. Total number of views for each channel and their corresponding channel names',
-                                       '8. Names of channels that published videos in the year 2022',
-                                       '9. Videos with the highest number of comments and their corresponding channel names'))
+questions = st.selectbox('Questions', ('1.  Names of all videos and their corresponding channels',
+                                       '2.  Channels with the most number of videos and the number of videos they have',
+                                       '3.  Top 10 most viewed videos and their respective channels',
+                                       '4.  Number of comments on each video and their corresponding video names',
+                                       '5.  Videos with the highest number of likes and their corresponding channel names',
+                                       '6.  Total number of likes for each video and their corresponding video names',
+                                       '7.  Total number of views for each channel and their corresponding channel names',
+                                       '8.  Names of channels that published videos in the year 2022',
+                                       '9.  What is the average duration of all videos in each channel, and what are their corresponding channel names',
+                                       '10. Videos have the highest number of comments, and what are their corresponding channel names?'))
 
-if questions == '1. Names of all videos and their corresponding channels':
+if questions == '1.  Names of all videos and their corresponding channels':
     query1 = '''select title,channel_name from videos'''
     cursor.execute(query1)
     mydb.commit()
     s1 = cursor.fetchall()
     dfs1 = pd.DataFrame(s1,columns=['video', 'channel'])
     st.write(dfs1)
-
-elif questions == '2. Channels with the most number of videos and the number of videos they have':
+#print(questions)
+elif questions == '2.  Channels with the most number of videos and the number of videos they have':
     query2 = '''select channelname, totalvideos from channels order by totalvideos desc;'''
     cursor.execute(query2)
     mydb.commit()
@@ -567,7 +568,7 @@ elif questions == '2. Channels with the most number of videos and the number of 
     dfs2 = pd.DataFrame(s2,columns=['channel', 'No of Videos'])
     st.write(dfs2)
 
-elif questions == '3. Top 10 most viewed videos and their respective channels':
+elif questions == '3.  Top 10 most viewed videos and their respective channels':
     query3 = '''select channel_name, title, views from videos where views is not null order by views desc limit 10'''
     cursor.execute(query3)
     mydb.commit()
@@ -575,7 +576,7 @@ elif questions == '3. Top 10 most viewed videos and their respective channels':
     dfs3 = pd.DataFrame(s3, columns=['channel', 'video', 'views'])
     st.write(dfs3)
 
-elif questions == '4. Number of comments on each video and their corresponding video names':
+elif questions == '4.  Number of comments on each video and their corresponding video names':
     query4 = '''select comments, title from videos where comments is not null'''
     cursor.execute(query4)
     mydb.commit()
@@ -583,7 +584,7 @@ elif questions == '4. Number of comments on each video and their corresponding v
     dfs4 = pd.DataFrame(s4, columns=['No of comments','videos'])
     st.write(dfs4)
 
-elif questions == '5. Videos with the highest number of likes and their corresponding channel names':
+elif questions == '5.  Videos with the highest number of likes and their corresponding channel names':
     query5 = '''select Title as VideoTitle, Channel_Name as ChannelName, Likes as LikesCount from videos 
                        where Likes is not null order by Likes desc;'''
     cursor.execute(query5)
@@ -592,7 +593,7 @@ elif questions == '5. Videos with the highest number of likes and their correspo
     dfs5 = pd.DataFrame(s5, columns=['video','channel', 'No of likes'])
     st.write(dfs5)
 
-elif questions == '6. Total number of likes for each video and their corresponding video names':
+elif questions == '6.  Total number of likes for each video and their corresponding video names':
     query6 = '''select title, likes from videos where likes is not null'''
     cursor.execute(query6)
     mydb.commit()
@@ -600,7 +601,7 @@ elif questions == '6. Total number of likes for each video and their correspondi
     dfs6 = pd.DataFrame(s6, columns = ['title','likes'])
     st.write(dfs6)
 
-elif questions == '7. Total number of views for each channel and their corresponding channel names':
+elif questions == '7.  Total number of views for each channel and their corresponding channel names':
     query7 = '''select channelname , views from channels where views is not null'''
     cursor.execute(query7)
     mydb.commit()
@@ -608,7 +609,7 @@ elif questions == '7. Total number of views for each channel and their correspon
     dfs7 = pd.DataFrame(s7, columns = ['channel','views'])
     st.write(dfs7)
 
-elif questions == '8. Names of channels that published videos in the year 2022':
+elif questions == '8.  Names of channels that published videos in the year 2022':
     query8 = '''select channel_name , title from videos where extract(year from published_date) = 2022'''
     cursor.execute(query8)
     mydb.commit()
@@ -616,11 +617,29 @@ elif questions == '8. Names of channels that published videos in the year 2022':
     dfs8 = pd.DataFrame(s8, columns = ['channel','videos published in 2022'])
     st.write(dfs8)
 
-else:
-    query9 = '''select channel_name, title, comments from videos where comments is not null order by comments desc'''
+elif questions =='9.  What is the average duration of all videos in each channel, and what are their corresponding channel names':
+    query9='''select channel_name, AVG(duration) from videos group by channel_name'''
     cursor.execute(query9)
     mydb.commit()
+    s9=cursor.fetchall()
+    dfs9=pd.DataFrame(s9,columns=['channelname','averageduration']) 
+
+    S9=[]
+    for index,row in dfs9.iterrows():
+        channel_title=row['channelname']
+        avg_duration=row['averageduration']
+        avg_duration_str=str(avg_duration)
+        S9.append(dict(channeltitle=channel_title,avgduration=avg_duration_str))
+    df1=pd.DataFrame(S9)
+    st.write(df1)
+
+else:
+    query10 = '''select channel_name, title, comments from videos where comments is not null order by comments desc'''
+    cursor.execute(query10)
+    mydb.commit()
     s9 = cursor.fetchall()
-    dfs9 = pd.DataFrame(s9, columns = ['channel','video','total no of comments'])
-    st.write(dfs9)
-    
+    dfs10 = pd.DataFrame(s9, columns = ['channel','video','total no of comments'])
+    st.write(dfs10)
+       
+
+       
